@@ -9,40 +9,42 @@ jobs:
     name: notion to hugo
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: true         # Fetch Hugo themes (true OR recursive)
-          fetch-depth: 0           # Fetch all history for .GitInfo and .Lastmod
+          submodules: true   # 递归拉取主题等子模块
+          fetch-depth: 0     # 拉取完整提交历史
 
       - name: Notion-site
-        uses: pkwenda/notion-site@master    # 拉取 Notion database 并转换成 Markdown
+        uses: pkwenda/notion-site@master   # 拉取 Notion database 并转换成 Markdown
         env:
           NOTION_SECRET: ${{ secrets.NOTION_SECRET }}
 
-      - name: Reformat bookmark shortcodes
+      - name: Reformat bookmark shortcodes to include closing tag
         run: |
-          echo "Reformatting bookmark shortcodes to the desired multi-line format..."
-          # 针对 content 文件夹下所有的 Markdown 文件
-          # 原来遇到的问题一般为：{{< bookmark ... >}}
-          # 此 sed 命令将其替换为：
-          # {{< bookmark ... >}}
+          echo "Reformatting bookmark shortcodes to include closing tag..."
+          # 扫描 content 文件夹下所有 Markdown 文件，将不带闭合标签的 bookmark 快捷方式替换为多行格式：
+          # 替换前：{{< bookmark url="..." image="..." title="..." >}}
+          # 替换后：
+          # {{< bookmark url="..." image="..." title="..." >}}
           # 点击查看详情
           # {{< /bookmark >}}
-          find content -type f -name "*.md" -exec sed -i 's/{{<\s*bookmark\([^>]*\)>}}/{{< bookmark\1 >}}\n点击查看详情\n{{< \/bookmark >}}/g' {} \;
+          find content -type f -name "*.md" -exec sed -i 's@{{<\s*bookmark\([^>]*\)>}}@{{< bookmark\1 >}}\n点击查看详情\n{{< /bookmark >}}@g' {} \;
 
       - name: Check if there are any changes
         id: verify_diff
         run: |
-          [ -z "$(git status -s .)" ] || echo "changed=true" >> $GITHUB_OUTPUT
+          if [ -n "$(git status -s .)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Commit files
+      - name: Commit changes and push updates
         if: steps.verify_diff.outputs.changed == 'true'
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Actions"
           git add --all
-          git commit -m "sync article from notion"
+          git commit -m "sync articles from notion and format bookmark shortcode"
           git config pull.rebase false
           git pull
           git push
