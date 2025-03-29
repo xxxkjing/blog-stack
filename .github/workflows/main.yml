@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0     # 拉取完整提交历史
 
       - name: Notion-site
-        uses: pkwenda/notion-site@master   # 拉取 Notion 数据并转换成 Markdown
+        uses: xxxkjing/notion-site@master   # 拉取 Notion 数据并转换成 Markdown
         env:
           NOTION_SECRET: ${{ secrets.NOTION_SECRET }}
 
