@@ -1,0 +1,50 @@
+<!-- layouts/shortcodes/bookmark.html -->
+<!-- 这个模板允许传入 url、image 和 title 属性，如果属性不存在，则使用默认值 -->
+<div class="notion-bookmark">
+  <a href="{{ .Get "url" }}" target="_blank" rel="noopener" class="notion-bookmark__link">
+    {{ if .Get "image" }}
+      <div class="notion-bookmark__image" style="background-image: url('{{ .Get "image" }}');"></div>
+    {{ end }}
+    <div class="notion-bookmark__content">
+      <h3 class="notion-bookmark__title">{{ .Get "title" | default "Notion Bookmark" }}</h3>
+      <p class="notion-bookmark__description">{{ .Inner | default "点击查看详情" }}</p>
+    </div>
+  </a>
+</div>
+<style>
+  .notion-bookmark {
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  text-decoration: none;
+  margin: 1em 0;
+}
+
+.notion-bookmark__link {
+  display: flex;
+  width: 100%;
+  color: inherit;
+}
+
+.notion-bookmark__image {
+  flex: 0 0 100px;
+  background-size: cover;
+  background-position: center;
+}
+
+.notion-bookmark__content {
+  padding: 1em;
+  flex: 1;
+}
+
+.notion-bookmark__title {
+  font-size: 1.1em;
+  margin: 0 0 0.5em;
+}
+
+.notion-bookmark__description {
+  margin: 0;
+  color: #555;
+}
+</style>
