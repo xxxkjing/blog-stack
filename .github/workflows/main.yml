@@ -9,29 +9,34 @@ jobs:
     name: notion to hugo
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
-        uses: actions/checkout@v3  # 拉取 Hugo 仓库
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           submodules: true         # Fetch Hugo themes (true OR recursive)
           fetch-depth: 0           # Fetch all history for .GitInfo and .Lastmod
 
-      - name: notion-site
-        uses: pkwenda/notion-site@master   # 拉取 Notion database 转换成 Markdown
+      - name: Notion-site
+        uses: pkwenda/notion-site@master    # 拉取 Notion database 并转换成 Markdown
         env:
           NOTION_SECRET: ${{ secrets.NOTION_SECRET }}
 
-      - name: Fix shortcode missing slash
+      - name: Reformat bookmark shortcodes
         run: |
-          echo "Fixing shortcode tags in markdown files..."
-          # 查找 content 文件夹下所有 .md 文件，针对 bookmark shortcode 在闭合大括号前添加斜杠
-          find content -type f -name "*.md" -exec sed -i 's/{{<\s*bookmark\([^>]*\)>}}/{{< bookmark\1 \/ >}}/g' {} \;
+          echo "Reformatting bookmark shortcodes to the desired multi-line format..."
+          # 针对 content 文件夹下所有的 Markdown 文件
+          # 原来遇到的问题一般为：{{< bookmark ... >}}
+          # 此 sed 命令将其替换为：
+          # {{< bookmark ... >}}
+          # 点击查看详情
+          # {{< /bookmark >}}
+          find content -type f -name "*.md" -exec sed -i 's/{{<\s*bookmark\([^>]*\)>}}/{{< bookmark\1 >}}\n点击查看详情\n{{< \/bookmark >}}/g' {} \;
 
       - name: Check if there are any changes
         id: verify_diff
         run: |
           [ -z "$(git status -s .)" ] || echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Commit files  # 推送新文章到 Hugo 仓库
+      - name: Commit files
         if: steps.verify_diff.outputs.changed == 'true'
         run: |
           git config user.email "action@github.com"
