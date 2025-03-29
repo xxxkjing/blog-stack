@@ -12,23 +12,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: true   # 递归拉取主题等子模块
+          submodules: true   # 递归拉取子模块，比如 Hugo 主题
           fetch-depth: 0     # 拉取完整提交历史
 
       - name: Notion-site
-        uses: pkwenda/notion-site@master   # 拉取 Notion database 并转换成 Markdown
+        uses: pkwenda/notion-site@master   # 拉取 Notion 数据并转换成 Markdown
         env:
           NOTION_SECRET: ${{ secrets.NOTION_SECRET }}
 
-      - name: Reformat bookmark shortcodes to include closing tag
+      - name: Reformat bookmark shortcodes using sed
         run: |
-          echo "Reformatting bookmark shortcodes to include closing tag..."
-          # 扫描 content 文件夹下所有 Markdown 文件，将不带闭合标签的 bookmark 快捷方式替换为多行格式：
-          # 替换前：{{< bookmark url="..." image="..." title="..." >}}
-          # 替换后：
-          # {{< bookmark url="..." image="..." title="..." >}}
-          # 点击查看详情
-          # {{< /bookmark >}}
+          echo "Processing markdown files to reformat bookmark shortcodes..."
+          # 查找 content 目录下所有 .md 文件
+          # 使用 sed 命令在每个文件中查找形如 {{< bookmark ... >}}
+          # 然后将其替换为块级格式，即在其后添加固定文本和闭合标签
           find content -type f -name "*.md" -exec sed -i 's@{{<\s*bookmark\([^>]*\)>}}@{{< bookmark\1 >}}\n点击查看详情\n{{< /bookmark >}}@g' {} \;
 
       - name: Check if there are any changes
@@ -38,13 +35,13 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Commit changes and push updates
+      - name: Commit and push changes
         if: steps.verify_diff.outputs.changed == 'true'
         run: |
           git config user.email "action@github.com"
           git config user.name "GitHub Actions"
           git add --all
-          git commit -m "sync articles from notion and format bookmark shortcode"
+          git commit -m "sync articles from notion and reformat bookmark shortcode"
           git config pull.rebase false
           git pull
           git push
